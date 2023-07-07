@@ -41,10 +41,8 @@ components:
           value: https://console.vapo-aws-valip-dev2.va.gov
         - name: CLUSTER_CONSOLE_TITLE
           value: OpenShift console
-        # This is required to enable access to additional needed extensions
         - name: OPENVSX_REGISTRY_URL
           value: https://open-vsx.org
-        # This is required for VSCode to trust OpenShift route certificates for VSCode extension installation
         - name: NODE_EXTRA_CA_CERTS
           value: /public-certs/custom-ca-certificates.custom-ca-certificates.pem
         - name: JAVA_OPTS
