@@ -1,63 +1,54 @@
 schemaVersion: 2.2.0
 metadata:
-  name: 4sightII-dev-env
-  displayName: 4 Sight II Development Environment
-  version: 1.0.0
-attributes:
-  che-theia.eclipse.org/sidecar-policy: mergeImage
-  controller.devfile.io/devworkspace-config:
-    name: devworkspace-config
-    namespace: devspaces-poc
-  controller.devfile.io/storage-type: per-user
-projects:
-  - git:
-      remotes:
-        origin: https://github.ec.va.gov/EPMO/4-sight_II_frontend.git
-    name: 4-sight-ii-frontend
-  - git:
-      remotes:
-        origin: https://github.ec.va.gov/EPMO/4-sight_II_backend.git
-    name: 4-sight-ii-backend
+  name: java-springboot
+  version: 1.2.1
+  attributes:
+    alpha.dockerimage-port: 8081
+  displayName: Spring Boot®
+  description: Spring Boot® using Maven
+  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/spring.svg
+  tags:
+    - Java
+    - Spring
+  projectType: springboot
+  language: Java
+  provider: Red Hat
+  supportUrl: https://github.com/devfile-samples/devfile-support#support-information
+parent:
+  id: java-springboot
+  registryUrl: 'https://registry.devfile.io'
 components:
-  - name: m2cache
-    volume:
-      size: 25G
-  - name: npmcache
-    volume:
-      size: 5G
-  - attributes:
-      controller.devfile.io/merge-contribution: true
-    container:
-      cpuLimit: 500m
-      cpuRequest: 30m
-      env:
-        - name: CHE_DASHBOARD_URL
-          value: https://devspaces.apps.vapo-aws-valip-dev2.va.gov
-        - name: CHE_PLUGIN_REGISTRY_URL
-          value: https://devspaces.apps.vapo-aws-valip-dev2.va.gov/plugin-registry/v3
-        - name: CHE_PLUGIN_REGISTRY_INTERNAL_URL
-          value: http://plugin-registry.devspaces-poc.svc:8080/v3
-        - name: CLUSTER_CONSOLE_URL
-          value: https://console.vapo-aws-valip-dev2.va.gov
-        - name: CLUSTER_CONSOLE_TITLE
-          value: OpenShift console
-        - name: OPENVSX_REGISTRY_URL
-          value: https://open-vsx.org
-        - name: NODE_EXTRA_CA_CERTS
-          value: /public-certs/custom-ca-certificates.custom-ca-certificates.pem
-        - name: JAVA_OPTS
-          value: "-Dcom.redhat.fips=false"
-        - name: NPM_TOKEN
-          value: <REPLACE_ME>
-        - name: NPM_FONTAWESOME_TOKEN
-          value: <REPLACE_ME>
-      image: registry.redhat.io/devspaces/udi-rhel8@sha256:bc9d5980a78f0c8b9eb5a20368514ced3dc6e5d99d286cb2e67266b1eb522b94
-      memoryLimit: 10G
-      memoryRequest: 1G
-      sourceMapping: /projects
-      volumeMounts:
-        - name: m2cache
-          path: /home/user/.m2
-        - name: npmcache
-          path: /home/user/.npm
-    name: universal-developer-image
+  - name: image-build
+    image:
+      imageName: java-springboot-image:latest
+      dockerfile:
+        uri: docker/Dockerfile
+        buildContext: .
+        rootRequired: false
+  - name: kubernetes-deploy
+    attributes:
+      deployment/replicas: 1
+      deployment/cpuRequest: 10m
+      deployment/memoryRequest: 180Mi
+      deployment/container-port: 8081
+    kubernetes:
+      uri: deploy.yaml
+      endpoints:
+        - name: http-8081
+          targetPort: 8081
+          path: /
+commands:
+  - id: build-image
+    apply:
+      component: image-build
+  - id: deployk8s
+    apply:
+      component: kubernetes-deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true
